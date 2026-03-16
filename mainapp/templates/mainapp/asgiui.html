@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASGI Live Trigger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+
+        #id-display {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #38bdf8;
+            background: #1e293b;
+            border: 2px solid #38bdf8;
+            border-radius: 1rem;
+            padding: 2rem 4rem;
+            min-width: 300px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        #id-display.flash {
+            background: #0369a1;
+        }
+
+        #status {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        #status.connected { color: #4ade80; }
+        #status.disconnected { color: #f87171; }
+    </style>
+</head>
+<body>
+    <h1>Live Trigger Receiver</h1>
+    <div id="id-display">—</div>
+    <p id="status" class="disconnected">Connecting...</p>
+
+    <script>
+        const display = document.getElementById('id-display');
+        const status  = document.getElementById('status');
+
+        const wsUrl = `ws://${window.location.host}/ws/asgi/`;
+        const socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+            status.textContent = 'Connected — waiting for trigger...';
+            status.className = 'connected';
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            display.textContent = data.id;
+
+            // Flash animation
+            display.classList.add('flash');
+            setTimeout(() => display.classList.remove('flash'), 500);
+        };
+
+        socket.onclose = () => {
+            status.textContent = 'Disconnected';
+            status.className = 'disconnected';
+        };
+
+        socket.onerror = (err) => {
+            status.textContent = 'WebSocket error — is Daphne running?';
+            status.className = 'disconnected';
+        };
+    </script>
+</body>
+</html>

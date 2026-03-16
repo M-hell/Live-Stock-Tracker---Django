@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from django.http import HttpResponse
+from channels.layers import get_channel_layer
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -57,5 +59,17 @@ def stockPicker(request):
     return render(request, 'mainapp/stockpicker.html', {'stockpicker': stock_picker})
 
 
-def stockTracker(request):
-    return render(request, 'mainapp/stocktracker.html')
+async def asgiui(request):
+    return render(request, 'mainapp/asgiui.html')
+
+
+async def asgitrig(request, trigger_id):
+    channel_layer = get_channel_layer()
+    await channel_layer.group_send(
+        "asgi_group",
+        {
+            "type": "asgi.trigger",
+            "id": trigger_id,
+        },
+    )
+    return HttpResponse(f"Triggered id: {trigger_id}")

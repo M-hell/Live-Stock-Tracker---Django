@@ -4,5 +4,6 @@ from mainapp import views
 
 urlpatterns = [
     path('',views.stockPicker, name='stockPicker'),
-    path('stocktracker/',views.stockTracker, name='stockTracker'),
+    path('asgiui/', views.asgiui, name='asgiui'),
+    path('asgitrig/<str:trigger_id>/', views.asgitrig, name='asgitrig'),
 ]

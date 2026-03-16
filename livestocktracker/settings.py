@@ -40,7 +40,16 @@ INSTALLED_APPS = [
 
     
     'mainapp',
+    'channels',
 ]
+
+ASGI_APPLICATION = 'livestocktracker.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
