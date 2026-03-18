@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -41,13 +42,17 @@ INSTALLED_APPS = [
     
     'mainapp',
     'channels',
+    'django_celery_beat',
 ]
 
 ASGI_APPLICATION = 'livestocktracker.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [os.getenv('CHANNEL_LAYER_REDIS_URL', 'redis://127.0.0.1:6379/0')],
+        },
     },
 }
 
@@ -127,3 +132,23 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+# Celery + RabbitMQ
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'amqp://guest:guest@localhost:5672//')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'rpc://')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Use django-celery-beat tables for managing periodic tasks from admin.
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Optional code-based periodic task schedule.
+CELERY_BEAT_SCHEDULE = {
+    'fetch-nsei-components-every-20-seconds': {
+        'task': 'mainapp.tasks.fetch_nsei_components_task',
+        'schedule': 20.0,
+    },
+}

@@ -3,4 +3,5 @@ from mainapp.consumers import AsgiConsumer
 
 websocket_urlpatterns = [
     path("ws/asgi/", AsgiConsumer.as_asgi()),
+    path('ws/stocks/', AsgiConsumer.as_asgi()),
 ]

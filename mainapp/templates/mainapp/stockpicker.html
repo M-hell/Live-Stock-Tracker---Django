@@ -10,6 +10,7 @@ StockPicker
 {% block body %}
 <div class="container mt-4">
     <h1>NIFTY 50 - Live</h1>
+    <p class="text-muted mb-3" id="live-status">Waiting for live updates...</p>
     <table class="table table-striped table-hover">
         <thead class="table-dark">
             <tr>
@@ -19,7 +20,7 @@ StockPicker
                 <th>% Change</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="stocks-table-body">
             {% for stock in stockpicker %}
             <tr>
                 <td><strong>{{ stock.symbol }}</strong></td>
@@ -39,5 +40,46 @@ StockPicker
 {% endblock %}
 {% block js %}
 <script>
+    const tableBody = document.getElementById('stocks-table-body');
+    const liveStatus = document.getElementById('live-status');
+    const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const stockSocket = new WebSocket(`${scheme}://${window.location.host}/ws/stocks/`);
+
+    function getChangeClass(value) {
+        return value && value.includes('-') ? 'text-danger' : 'text-success';
+    }
+
+    function renderStocks(stocks) {
+        tableBody.innerHTML = stocks.map((stock) => `
+            <tr>
+                <td><strong>${stock.symbol}</strong></td>
+                <td>${stock.company}</td>
+                <td class="${getChangeClass(stock.change)}">${stock.change}</td>
+                <td class="${getChangeClass(stock.pct_change)}">${stock.pct_change}</td>
+            </tr>
+        `).join('');
+    }
+
+    stockSocket.onopen = () => {
+        liveStatus.textContent = 'WebSocket connected. Waiting for next Celery Beat update.';
+    };
+
+    stockSocket.onmessage = (event) => {
+        const payload = JSON.parse(event.data);
+        if (payload.type !== 'stocks.update') {
+            return;
+        }
+
+        renderStocks(payload.stocks);
+        liveStatus.textContent = `Last updated: ${new Date(payload.fetched_at).toLocaleTimeString()}`;
+    };
+
+    stockSocket.onclose = () => {
+        liveStatus.textContent = 'WebSocket disconnected.';
+    };
+
+    stockSocket.onerror = () => {
+        liveStatus.textContent = 'WebSocket error. Check ASGI server and Redis channel layer.';
+    };
 </script>
 {% endblock %}
