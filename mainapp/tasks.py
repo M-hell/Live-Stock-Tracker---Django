@@ -1,6 +1,7 @@
 from asgiref.sync import async_to_sync
 from celery import shared_task
 from channels.layers import get_channel_layer
+from django.core.cache import cache
 from django.utils import timezone
 
 from mainapp.consumers import STOCKS_GROUP_NAME
@@ -11,6 +12,10 @@ from mainapp.services import fetch_nsei_components
 def fetch_nsei_components_task() -> str:
     stocks = fetch_nsei_components()
     fetched_at = timezone.now().isoformat()
+
+    # Overwrite the same cache keys every run so old snapshot is replaced.
+    cache.set('stock_picker', stocks, timeout=None)
+    cache.set('stock_picker_fetched_at', fetched_at, timeout=None)
 
     channel_layer = get_channel_layer()
     if channel_layer is not None:

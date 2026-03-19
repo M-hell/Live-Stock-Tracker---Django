@@ -21,6 +21,7 @@ cssselect==1.4.0
 curl_cffi==0.13.0
 Django==6.0.3
 django-celery-beat==2.9.0
+django-redis==5.4.0
 django-timezone-field==7.2.1
 fake-useragent==2.2.0
 feedparser==6.0.12
